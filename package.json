@@ -1,17 +1,17 @@
 {
   "name": "nexora-app",
   "version": "1.0.0",
+  "description": "NEXORA AI Android App",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1
   },
   "keywords": [],
-  "author": "",
+  "author": "DAVIDS DIGITALS LTD.",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "@capacitor/android": "^8.5.2",
-    "@capacitor/core": "^8.5.2",
-    "@capacitor/cli": "^8.5.2"
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2"
   }
 }
