@@ -13,54 +13,78 @@
 
     <link
         rel="stylesheet"
-        href="style.css?v=12"
+        href="style.css?v=13"
     >
 </head>
 
 <body>
 
-    <!-- =========================================================
-         SPLASH SCREEN
-    ========================================================== -->
+    <!-- =====================================================
+         SPLASH
+    ====================================================== -->
 
-    <div id="splashScreen" class="splash-screen">
+    <div
+        id="splashScreen"
+        class="splash-screen"
+    >
 
         <div class="splash-logo">
 
-            <div class="splash-logo-mark">N</div>
+            <div class="splash-logo-mark">
+                N
+            </div>
 
-            <div class="splash-name">NEXORA</div>
+            <div class="splash-name">
+                NEXORA
+            </div>
 
-            <div class="splash-tagline">AI ASSISTANT</div>
+            <div class="splash-tagline">
+                AI ASSISTANT
+            </div>
 
         </div>
 
     </div>
 
 
-    <!-- =========================================================
-         AUTH SCREEN
-    ========================================================== -->
+    <!-- =====================================================
+         AUTH
+    ====================================================== -->
 
-    <div id="authScreen" class="auth-screen">
+    <div
+        id="authScreen"
+        class="auth-screen"
+    >
 
         <div class="auth-card">
 
-            <div class="auth-logo">N</div>
+            <div class="auth-logo">
+                N
+            </div>
 
-            <h1>NEXORA AI</h1>
+            <h1>
+                NEXORA AI
+            </h1>
 
             <p class="auth-subtitle">
                 Your intelligent AI assistant
             </p>
 
+
             <!-- LOGIN -->
 
-            <div id="loginScreen" class="auth-form">
+            <div
+                id="loginScreen"
+                class="auth-form"
+            >
 
-                <h2>Welcome Back</h2>
+                <h2>
+                    Welcome Back
+                </h2>
 
-                <p>Login to continue to NEXORA</p>
+                <p>
+                    Login to continue to NEXORA
+                </p>
 
                 <input
                     type="email"
@@ -84,8 +108,21 @@
                 </button>
 
                 <p class="auth-switch">
+
+                    <span id="showForgotPassword">
+                        Forgot password?
+                    </span>
+
+                </p>
+
+                <p class="auth-switch">
+
                     Don't have an account?
-                    <span id="showSignup">Sign Up</span>
+
+                    <span id="showSignup">
+                        Sign Up
+                    </span>
+
                 </p>
 
             </div>
@@ -99,9 +136,13 @@
                 style="display:none;"
             >
 
-                <h2>Create Account</h2>
+                <h2>
+                    Create Account
+                </h2>
 
-                <p>Join NEXORA AI today</p>
+                <p>
+                    Join NEXORA AI today
+                </p>
 
                 <input
                     type="text"
@@ -132,11 +173,106 @@
                 </button>
 
                 <p class="auth-switch">
+
                     Already have an account?
-                    <span id="showLogin">Login</span>
+
+                    <span id="showLogin">
+                        Login
+                    </span>
+
                 </p>
 
             </div>
+
+
+            <!-- FORGOT PASSWORD -->
+
+            <div
+                id="forgotPasswordScreen"
+                class="auth-form"
+                style="display:none;"
+            >
+
+                <h2>
+                    Forgot Password?
+                </h2>
+
+                <p>
+                    Enter your account email and we'll send you a secure password reset link.
+                </p>
+
+                <input
+                    type="email"
+                    id="forgotEmail"
+                    placeholder="Enter your email"
+                    autocomplete="email"
+                >
+
+                <button
+                    id="forgotPasswordBtn"
+                    class="auth-button"
+                >
+                    Send Reset Link
+                </button>
+
+                <p class="auth-switch">
+
+                    <span id="backToLogin">
+                        ← Back to Login
+                    </span>
+
+                </p>
+
+            </div>
+
+
+            <!-- RESET PASSWORD -->
+
+            <div
+                id="resetPasswordScreen"
+                class="auth-form"
+                style="display:none;"
+            >
+
+                <h2>
+                    Create New Password
+                </h2>
+
+                <p>
+                    Choose a new password for your NEXORA account.
+                </p>
+
+                <input
+                    type="password"
+                    id="resetPassword"
+                    placeholder="New password"
+                    autocomplete="new-password"
+                >
+
+                <input
+                    type="password"
+                    id="resetPasswordConfirm"
+                    placeholder="Confirm new password"
+                    autocomplete="new-password"
+                >
+
+                <button
+                    id="resetPasswordBtn"
+                    class="auth-button"
+                >
+                    Reset Password
+                </button>
+
+                <p class="auth-switch">
+
+                    <span id="resetBackToLogin">
+                        ← Back to Login
+                    </span>
+
+                </p>
+
+            </div>
+
 
             <div
                 id="authMessage"
@@ -148,17 +284,15 @@
     </div>
 
 
-    <!-- =========================================================
+    <!-- =====================================================
          MAIN APP
-    ========================================================== -->
+    ====================================================== -->
 
     <div
         id="app"
         class="app"
         style="display:none;"
     >
-
-        <!-- DRAWER OVERLAY -->
 
         <div
             id="drawerOverlay"
@@ -177,11 +311,18 @@
 
                 <div class="drawer-brand">
 
-                    <div class="drawer-logo">N</div>
+                    <div class="drawer-logo">
+                        N
+                    </div>
 
-                    <span>NEXORA</span>
+                    <span>
+                        NEXORA
+                    </span>
 
-                    <span class="verified-badge" title="Verified">
+                    <span
+                        class="verified-badge"
+                        title="Verified"
+                    >
                         ✓
                     </span>
 
@@ -207,7 +348,9 @@
 
             <div class="drawer-section">
 
-                <h3>Conversations</h3>
+                <h3>
+                    Conversations
+                </h3>
 
                 <div
                     id="conversationList"
@@ -256,9 +399,7 @@
         </aside>
 
 
-        <!-- =====================================================
-             MAIN CHAT
-        ====================================================== -->
+        <!-- MAIN -->
 
         <main class="main-content">
 
@@ -273,9 +414,13 @@
 
                 <div class="top-brand">
 
-                    <div class="top-logo">N</div>
+                    <div class="top-logo">
+                        N
+                    </div>
 
-                    <span>NEXORA AI</span>
+                    <span>
+                        NEXORA AI
+                    </span>
 
                     <span
                         class="verified-badge top-badge"
@@ -290,7 +435,11 @@
                     id="topProfileBtn"
                     class="profile-button"
                 >
-                    <span id="profileInitial">U</span>
+
+                    <span id="profileInitial">
+                        U
+                    </span>
+
                 </button>
 
             </header>
@@ -308,13 +457,16 @@
                     class="welcome-screen"
                 >
 
-                    <div class="welcome-logo">N</div>
+                    <div class="welcome-logo">
+                        N
+                    </div>
 
-                    <h1>Hello, I'm NEXORA</h1>
+                    <h1>
+                        Hello, I'm NEXORA
+                    </h1>
 
                     <p>
-                        Your intelligent AI assistant.
-                        Ask me anything.
+                        Your intelligent AI assistant. Ask me anything.
                     </p>
 
                     <div class="suggestion-grid">
@@ -387,9 +539,7 @@
         </main>
 
 
-        <!-- =====================================================
-             PROFILE MODAL
-        ====================================================== -->
+        <!-- PROFILE MODAL -->
 
         <div
             id="profileModal"
@@ -406,9 +556,13 @@
                     ×
                 </button>
 
-                <div class="modal-logo">N</div>
+                <div class="modal-logo">
+                    N
+                </div>
 
-                <h2>Your Profile</h2>
+                <h2>
+                    Your Profile
+                </h2>
 
                 <input
                     type="text"
@@ -435,9 +589,7 @@
         </div>
 
 
-        <!-- =====================================================
-             MEMORY MODAL
-        ====================================================== -->
+        <!-- MEMORY MODAL -->
 
         <div
             id="memoryModal"
@@ -454,9 +606,13 @@
                     ×
                 </button>
 
-                <div class="modal-logo">🧠</div>
+                <div class="modal-logo">
+                    🧠
+                </div>
 
-                <h2>NEXORA Memory</h2>
+                <h2>
+                    NEXORA Memory
+                </h2>
 
                 <p>
                     Things NEXORA remembers about you.
@@ -479,9 +635,7 @@
         </div>
 
 
-        <!-- =====================================================
-             RENAME CONVERSATION MODAL
-        ====================================================== -->
+        <!-- RENAME -->
 
         <div
             id="renameModal"
@@ -498,9 +652,13 @@
                     ×
                 </button>
 
-                <div class="modal-logo">✏️</div>
+                <div class="modal-logo">
+                    ✏️
+                </div>
 
-                <h2>Rename Conversation</h2>
+                <h2>
+                    Rename Conversation
+                </h2>
 
                 <p>
                     Give this conversation a new name.
@@ -525,9 +683,7 @@
         </div>
 
 
-        <!-- =====================================================
-             SWITCH ACCOUNT MODAL
-        ====================================================== -->
+        <!-- ACCOUNT -->
 
         <div
             id="accountModal"
@@ -544,9 +700,13 @@
                     ×
                 </button>
 
-                <div class="modal-logo">⇄</div>
+                <div class="modal-logo">
+                    ⇄
+                </div>
 
-                <h2>Switch Account</h2>
+                <h2>
+                    Switch Account
+                </h2>
 
                 <p>
                     Login with another NEXORA account.
@@ -571,9 +731,7 @@
         </div>
 
 
-        <!-- =====================================================
-             CONFIRMATION MODAL
-        ====================================================== -->
+        <!-- CONFIRM -->
 
         <div
             id="confirmModal"
@@ -616,7 +774,7 @@
     </div>
 
 
-    <script src="script.js?v=12"></script>
+    <script src="script.js?v=13"></script>
 
 </body>
 
