@@ -13,7 +13,7 @@
 
     <link
         rel="stylesheet"
-        href="style.css?v=13"
+        href="style.css?v=14"
     >
 </head>
 
@@ -59,19 +59,25 @@
         <div class="auth-card">
 
             <div class="auth-logo">
-                N
-            </div>
+    N
+</div>
 
-            <h1>
-                NEXORA AI
-            </h1>
+<h1>
+    NEXORA AI
+</h1>
 
-            <p class="auth-subtitle">
-                Your intelligent AI assistant
-            </p>
+<p class="auth-subtitle">
+    Your intelligent AI assistant
+</p>
+
+<p class="auth-brand-credit">
+    Created by <strong>DAVIDS DIGITALS LTD.©</strong>
+</p>
 
 
-            <!-- LOGIN -->
+            <!-- =================================================
+                 LOGIN
+            ================================================== -->
 
             <div
                 id="loginScreen"
@@ -87,10 +93,11 @@
                 </p>
 
                 <input
-                    type="email"
-                    id="loginEmail"
-                    placeholder="Email"
-                    autocomplete="email"
+                    type="text"
+                    id="loginUsername"
+                    placeholder="Username"
+                    autocomplete="username"
+                    maxlength="30"
                 >
 
                 <input
@@ -109,14 +116,6 @@
 
                 <p class="auth-switch">
 
-                    <span id="showForgotPassword">
-                        Forgot password?
-                    </span>
-
-                </p>
-
-                <p class="auth-switch">
-
                     Don't have an account?
 
                     <span id="showSignup">
@@ -128,7 +127,9 @@
             </div>
 
 
-            <!-- SIGNUP -->
+            <!-- =================================================
+                 SIGNUP
+            ================================================== -->
 
             <div
                 id="signupScreen"
@@ -146,22 +147,23 @@
 
                 <input
                     type="text"
-                    id="signupName"
-                    placeholder="Your name"
-                    autocomplete="name"
-                >
-
-                <input
-                    type="email"
-                    id="signupEmail"
-                    placeholder="Email"
-                    autocomplete="email"
+                    id="signupUsername"
+                    placeholder="Choose a username"
+                    autocomplete="username"
+                    maxlength="30"
                 >
 
                 <input
                     type="password"
                     id="signupPassword"
                     placeholder="Password"
+                    autocomplete="new-password"
+                >
+
+                <input
+                    type="password"
+                    id="signupPasswordConfirm"
+                    placeholder="Confirm password"
                     autocomplete="new-password"
                 >
 
@@ -185,94 +187,9 @@
             </div>
 
 
-            <!-- FORGOT PASSWORD -->
-
-            <div
-                id="forgotPasswordScreen"
-                class="auth-form"
-                style="display:none;"
-            >
-
-                <h2>
-                    Forgot Password?
-                </h2>
-
-                <p>
-                    Enter your account email and we'll send you a secure password reset link.
-                </p>
-
-                <input
-                    type="email"
-                    id="forgotEmail"
-                    placeholder="Enter your email"
-                    autocomplete="email"
-                >
-
-                <button
-                    id="forgotPasswordBtn"
-                    class="auth-button"
-                >
-                    Send Reset Link
-                </button>
-
-                <p class="auth-switch">
-
-                    <span id="backToLogin">
-                        ← Back to Login
-                    </span>
-
-                </p>
-
-            </div>
-
-
-            <!-- RESET PASSWORD -->
-
-            <div
-                id="resetPasswordScreen"
-                class="auth-form"
-                style="display:none;"
-            >
-
-                <h2>
-                    Create New Password
-                </h2>
-
-                <p>
-                    Choose a new password for your NEXORA account.
-                </p>
-
-                <input
-                    type="password"
-                    id="resetPassword"
-                    placeholder="New password"
-                    autocomplete="new-password"
-                >
-
-                <input
-                    type="password"
-                    id="resetPasswordConfirm"
-                    placeholder="Confirm new password"
-                    autocomplete="new-password"
-                >
-
-                <button
-                    id="resetPasswordBtn"
-                    class="auth-button"
-                >
-                    Reset Password
-                </button>
-
-                <p class="auth-switch">
-
-                    <span id="resetBackToLogin">
-                        ← Back to Login
-                    </span>
-
-                </p>
-
-            </div>
-
+            <!-- =================================================
+                 AUTH MESSAGE
+            ================================================== -->
 
             <div
                 id="authMessage"
@@ -300,7 +217,9 @@
         ></div>
 
 
-        <!-- DRAWER -->
+        <!-- =================================================
+             DRAWER
+        ================================================== -->
 
         <aside
             id="drawer"
@@ -399,7 +318,9 @@
         </aside>
 
 
-        <!-- MAIN -->
+        <!-- =================================================
+             MAIN
+        ================================================== -->
 
         <main class="main-content">
 
@@ -445,7 +366,9 @@
             </header>
 
 
-            <!-- CHAT -->
+            <!-- =================================================
+                 CHAT
+            ================================================== -->
 
             <section
                 id="chatContainer"
@@ -500,7 +423,9 @@
             </section>
 
 
-            <!-- INPUT -->
+            <!-- =================================================
+                 INPUT
+            ================================================== -->
 
             <div class="input-area">
 
@@ -539,7 +464,9 @@
         </main>
 
 
-        <!-- PROFILE MODAL -->
+        <!-- =================================================
+             PROFILE MODAL
+        ================================================== -->
 
         <div
             id="profileModal"
@@ -571,9 +498,9 @@
                 >
 
                 <input
-                    type="email"
-                    id="profileEmail"
-                    placeholder="Email"
+                    type="text"
+                    id="profileUsername"
+                    placeholder="Username"
                     disabled
                 >
 
@@ -589,7 +516,9 @@
         </div>
 
 
-        <!-- MEMORY MODAL -->
+        <!-- =================================================
+             MEMORY MODAL
+        ================================================== -->
 
         <div
             id="memoryModal"
@@ -635,7 +564,9 @@
         </div>
 
 
-        <!-- RENAME -->
+        <!-- =================================================
+             RENAME CONVERSATION
+        ================================================== -->
 
         <div
             id="renameModal"
@@ -683,7 +614,9 @@
         </div>
 
 
-        <!-- ACCOUNT -->
+        <!-- =================================================
+             ACCOUNT SWITCH
+        ================================================== -->
 
         <div
             id="accountModal"
@@ -731,7 +664,9 @@
         </div>
 
 
-        <!-- CONFIRM -->
+        <!-- =================================================
+             CONFIRM
+        ================================================== -->
 
         <div
             id="confirmModal"
@@ -774,7 +709,11 @@
     </div>
 
 
-    <script src="script.js?v=13"></script>
+    <!-- =====================================================
+         SCRIPT
+    ====================================================== -->
+
+    <script src="script.js?v=14"></script>
 
 </body>
 

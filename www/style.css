@@ -1785,7 +1785,7 @@ textarea {
         position: fixed;
         left: 0;
         right: 0;
-        bottom: 25px;
+        bottom: 10px;
 
         width: 100%;
 
@@ -1810,4 +1810,17 @@ textarea {
     .chat-container {
         padding-bottom: 130px;
     }
+}
+
+.auth-brand-credit {
+    margin: 8px 0 24px;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    color: #aeb4c2;
+}
+
+.auth-brand-credit strong {
+    color: #d6a84f;
+    font-weight: 750;
 }
