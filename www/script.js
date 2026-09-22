@@ -1,28 +1,29 @@
 /* ============================================================
-   NEXORA AI 13
+   NEXORA AI 14 — WWW VERSION
    COMPLETE FRONTEND CONTROLLER
-   MATCHED TO NEXORA AI VERSION 13 HTML + CSS
+   USERNAME + PASSWORD AUTHENTICATION
    DAVIDS DIGITALS LTD.©
    ============================================================ */
 
 const API_BASE =
-    "https://nexora-ai-1-r9y5.onrender.com";
+    "https://nexora-ai-9jgj.onrender.com";
 
 
 /* ============================================================
    STATE
-   ============================================================ */
+============================================================ */
 
 let currentUser = null;
 let currentConversationId = null;
 let conversations = [];
-let resetToken = null;
 let renameConversationId = null;
+let isSending = false;
+let recognition = null;
 
 
 /* ============================================================
    DOM HELPER
-   ============================================================ */
+============================================================ */
 
 const $ = (id) =>
     document.getElementById(id);
@@ -30,7 +31,7 @@ const $ = (id) =>
 
 /* ============================================================
    DISPLAY HELPERS
-   ============================================================ */
+============================================================ */
 
 function show(element) {
     if (element) {
@@ -48,7 +49,7 @@ function hide(element) {
 
 /* ============================================================
    API
-   ============================================================ */
+============================================================ */
 
 async function api(endpoint, options = {}) {
 
@@ -62,10 +63,11 @@ async function api(endpoint, options = {}) {
 
     try {
 
-        const response = await fetch(
-            API_BASE + endpoint,
-            config
-        );
+        const response =
+            await fetch(
+                API_BASE + endpoint,
+                config
+            );
 
         const data =
             await response
@@ -97,7 +99,7 @@ async function api(endpoint, options = {}) {
 
 /* ============================================================
    AUTH MESSAGE
-   ============================================================ */
+============================================================ */
 
 function setAuthMessage(
     message,
@@ -113,21 +115,18 @@ function setAuthMessage(
         message || "";
 
     box.className =
-        "auth-message " +
-        type;
+        "auth-message " + type;
 }
 
 
 /* ============================================================
    AUTH SCREEN
-   ============================================================ */
+============================================================ */
 
 function showAuthScreen(screenId) {
 
     hide($("loginScreen"));
     hide($("signupScreen"));
-    hide($("forgotPasswordScreen"));
-    hide($("resetPasswordScreen"));
 
     show($(screenId));
 
@@ -136,24 +135,57 @@ function showAuthScreen(screenId) {
 
 
 /* ============================================================
+   NORMALIZE USER
+============================================================ */
+
+function normalizeUser(data) {
+
+    const user =
+        data?.user ||
+        data?.account ||
+        data ||
+        {};
+
+    return {
+
+        username:
+            user.username ||
+            user.name ||
+            "",
+
+        name:
+            user.name ||
+            user.username ||
+            "",
+
+        user_id:
+            user.user_id ||
+            user.id ||
+            user.username ||
+            ""
+    };
+}
+
+
+/* ============================================================
    SAVE USER
-   ============================================================ */
+============================================================ */
 
 function saveUser(user) {
 
     currentUser =
-        user;
+        normalizeUser(user);
 
     localStorage.setItem(
         "nexora_user",
-        JSON.stringify(user)
+        JSON.stringify(currentUser)
     );
 }
 
 
 /* ============================================================
    LOAD USER
-   ============================================================ */
+============================================================ */
 
 function loadUser() {
 
@@ -168,11 +200,20 @@ function loadUser() {
             return null;
         }
 
-        return JSON.parse(saved);
+        return normalizeUser(
+            JSON.parse(saved)
+        );
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Saved user error:",
+            error
+        );
+
+        localStorage.removeItem(
+            "nexora_user"
+        );
 
         return null;
     }
@@ -180,8 +221,24 @@ function loadUser() {
 
 
 /* ============================================================
+   USERNAME
+============================================================ */
+
+function getUsername() {
+
+    return (
+        currentUser?.username ||
+        currentUser?.name ||
+        ""
+    )
+        .trim()
+        .toLowerCase();
+}
+
+
+/* ============================================================
    USER PAYLOAD
-   ============================================================ */
+============================================================ */
 
 function userPayload() {
 
@@ -190,11 +247,13 @@ function userPayload() {
     }
 
     return {
-        email:
-            currentUser.email,
 
         username:
-            currentUser.username,
+            getUsername(),
+
+        name:
+            currentUser.name ||
+            getUsername(),
 
         user:
             currentUser
@@ -203,14 +262,51 @@ function userPayload() {
 
 
 /* ============================================================
+   USER QUERY
+============================================================ */
+
+function addUserQueryParams(params) {
+
+    const username =
+        getUsername();
+
+    if (username) {
+
+        params.set(
+            "username",
+            username
+        );
+    }
+
+    return params;
+}
+
+
+/* ============================================================
    LOGOUT
-   ============================================================ */
+============================================================ */
 
 function logout() {
+
+    if (recognition) {
+
+        try {
+            recognition.stop();
+        } catch (error) {
+            console.warn(
+                "Voice stop error:",
+                error
+            );
+        }
+
+        recognition = null;
+    }
 
     currentUser = null;
     currentConversationId = null;
     conversations = [];
+    renameConversationId = null;
+    isSending = false;
 
     localStorage.removeItem(
         "nexora_user"
@@ -224,8 +320,8 @@ function logout() {
         "loginScreen"
     );
 
-    if ($("loginEmail")) {
-        $("loginEmail").value = "";
+    if ($("loginUsername")) {
+        $("loginUsername").value = "";
     }
 
     if ($("loginPassword")) {
@@ -238,23 +334,38 @@ function logout() {
 
 /* ============================================================
    LOGIN
-   ============================================================ */
+============================================================ */
 
 async function login() {
 
-    const email =
-        $("loginEmail")
+    if (isSending) {
+        return;
+    }
+
+    const username =
+        $("loginUsername")
             ?.value
-            .trim();
+            .trim()
+            .toLowerCase();
 
     const password =
         $("loginPassword")
             ?.value || "";
 
-    if (!email) {
+    if (!username) {
 
         setAuthMessage(
-            "Please enter your email.",
+            "Please enter your username.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!/^[a-z0-9_]{3,30}$/.test(username)) {
+
+        setAuthMessage(
+            "Username must be 3–30 characters and use only letters, numbers, or underscores.",
             "error"
         );
 
@@ -277,6 +388,7 @@ async function login() {
     if (button) {
 
         button.disabled = true;
+
         button.textContent =
             "Logging in...";
     }
@@ -291,13 +403,15 @@ async function login() {
 
                     body:
                         JSON.stringify({
-                            email,
+                            username,
                             password
                         })
                 }
             );
 
-        if (!data.success) {
+        if (
+            data.success === false
+        ) {
 
             setAuthMessage(
                 data.message ||
@@ -308,9 +422,24 @@ async function login() {
             return;
         }
 
-        saveUser(
-            data.user
-        );
+        const user =
+            normalizeUser(
+                data.user ||
+                data.account ||
+                data
+            );
+
+        if (!user.username) {
+
+            setAuthMessage(
+                "Login succeeded, but no user account was returned.",
+                "error"
+            );
+
+            return;
+        }
+
+        saveUser(user);
 
         await openApp();
 
@@ -327,6 +456,7 @@ async function login() {
         if (button) {
 
             button.disabled = false;
+
             button.textContent =
                 "Login";
         }
@@ -336,216 +466,43 @@ async function login() {
 
 /* ============================================================
    SIGNUP
-   ============================================================ */
+============================================================ */
 
 async function signup() {
 
-    const name =
-        $("signupName")
+    const username =
+        $("signupUsername")
             ?.value
-            .trim();
-
-    const email =
-        $("signupEmail")
-            ?.value
-            .trim();
+            .trim()
+            .toLowerCase();
 
     const password =
         $("signupPassword")
             ?.value || "";
 
-    if (!name) {
-
-        setAuthMessage(
-            "Please enter your name.",
-            "error"
-        );
-
-        return;
-    }
-
-    if (!email) {
-
-        setAuthMessage(
-            "Please enter your email.",
-            "error"
-        );
-
-        return;
-    }
-
-    if (password.length < 6) {
-
-        setAuthMessage(
-            "Password must be at least 6 characters.",
-            "error"
-        );
-
-        return;
-    }
-
-    const button =
-        $("signupBtn");
-
-    if (button) {
-
-        button.disabled = true;
-        button.textContent =
-            "Creating...";
-    }
-
-    try {
-
-        const data =
-            await api(
-                "/signup",
-                {
-                    method: "POST",
-
-                    body:
-                        JSON.stringify({
-                            name,
-                            email,
-                            password
-                        })
-                }
-            );
-
-        if (!data.success) {
-
-            setAuthMessage(
-                data.message ||
-                "Unable to create account.",
-                "error"
-            );
-
-            return;
-        }
-
-        saveUser(
-            data.user
-        );
-
-        await openApp();
-
-    } catch (error) {
-
-        setAuthMessage(
-            error.message ||
-            "Unable to connect to NEXORA.",
-            "error"
-        );
-
-    } finally {
-
-        if (button) {
-
-            button.disabled = false;
-            button.textContent =
-                "Sign Up";
-        }
-    }
-}
-
-
-/* ============================================================
-   FORGOT PASSWORD
-   ============================================================ */
-
-async function requestPasswordReset() {
-
-    const email =
-        $("forgotEmail")
-            ?.value
-            .trim();
-
-    if (!email) {
-
-        setAuthMessage(
-            "Please enter the email connected to your NEXORA account.",
-            "error"
-        );
-
-        return;
-    }
-
-    const button =
-        $("forgotPasswordBtn");
-
-    if (button) {
-
-        button.disabled = true;
-        button.textContent =
-            "Sending...";
-    }
-
-    try {
-
-        const data =
-            await api(
-                "/forgot-password",
-                {
-                    method: "POST",
-
-                    body:
-                        JSON.stringify({
-                            email
-                        })
-                }
-            );
-
-        setAuthMessage(
-            data.message ||
-            "If an account exists for that email, a reset link has been sent.",
-            "success"
-        );
-
-        if (button) {
-            button.textContent =
-                "Reset Link Sent";
-        }
-
-    } catch (error) {
-
-        setAuthMessage(
-            error.message ||
-            "Unable to send the reset link.",
-            "error"
-        );
-
-        if (button) {
-
-            button.disabled = false;
-            button.textContent =
-                "Send Reset Link";
-        }
-    }
-}
-
-
-/* ============================================================
-   RESET PASSWORD
-   ============================================================ */
-
-async function resetPassword() {
-
-    if (!resetToken) {
-
-        setAuthMessage(
-            "This password reset link is invalid.",
-            "error"
-        );
-
-        return;
-    }
-
-    const password =
-        $("resetPassword")
-            ?.value || "";
-
     const confirmPassword =
-        $("resetPasswordConfirm")
+        $("signupPasswordConfirm")
             ?.value || "";
+
+    if (!username) {
+
+        setAuthMessage(
+            "Please choose a username.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!/^[a-z0-9_]{3,30}$/.test(username)) {
+
+        setAuthMessage(
+            "Username must be 3–30 characters and use only letters, numbers, or underscores.",
+            "error"
+        );
+
+        return;
+    }
 
     if (password.length < 6) {
 
@@ -568,73 +525,73 @@ async function resetPassword() {
     }
 
     const button =
-        $("resetPasswordBtn");
+        $("signupBtn");
 
     if (button) {
 
         button.disabled = true;
+
         button.textContent =
-            "Resetting...";
+            "Creating...";
     }
 
     try {
 
         const data =
             await api(
-                "/reset-password",
+                "/signup",
                 {
                     method: "POST",
 
                     body:
                         JSON.stringify({
-                            token:
-                                resetToken,
-
+                            username,
                             password,
-
                             confirm_password:
                                 confirmPassword
                         })
                 }
             );
 
-        if (!data.success) {
+        if (
+            data.success === false
+        ) {
 
             setAuthMessage(
                 data.message ||
-                "Unable to reset password.",
+                "Unable to create account.",
                 "error"
             );
 
             return;
         }
 
-        resetToken = null;
+        const user =
+            normalizeUser(
+                data.user ||
+                data.account ||
+                data
+            );
 
-        window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname
-        );
+        if (!user.username) {
 
-        showAuthScreen(
-            "loginScreen"
-        );
+            setAuthMessage(
+                "Account created, but no user account was returned.",
+                "error"
+            );
 
-        if ($("loginPassword")) {
-            $("loginPassword").value = "";
+            return;
         }
 
-        setAuthMessage(
-            "Password reset successfully. You can now log in with your new password.",
-            "success"
-        );
+        saveUser(user);
+
+        await openApp();
 
     } catch (error) {
 
         setAuthMessage(
             error.message ||
-            "Unable to reset your password.",
+            "Unable to connect to NEXORA.",
             "error"
         );
 
@@ -643,59 +600,17 @@ async function resetPassword() {
         if (button) {
 
             button.disabled = false;
+
             button.textContent =
-                "Reset Password";
+                "Sign Up";
         }
     }
 }
 
 
 /* ============================================================
-   CHECK PASSWORD RESET LINK
-   ============================================================ */
-
-function checkResetLink() {
-
-    const params =
-        new URLSearchParams(
-            window.location.search
-        );
-
-    const token =
-        params.get(
-            "reset_token"
-        );
-
-    if (!token) {
-        return false;
-    }
-
-    resetToken =
-        token;
-
-    hide(
-        $("splashScreen")
-    );
-
-    show(
-        $("authScreen")
-    );
-
-    showAuthScreen(
-        "resetPasswordScreen"
-    );
-
-    setAuthMessage(
-        "Create a new password for your account."
-    );
-
-    return true;
-}
-
-
-/* ============================================================
    OPEN APP
-   ============================================================ */
+============================================================ */
 
 async function openApp() {
 
@@ -732,7 +647,7 @@ async function openApp() {
 
 /* ============================================================
    PROFILE UI
-   ============================================================ */
+============================================================ */
 
 function updateProfileUI() {
 
@@ -742,7 +657,7 @@ function updateProfileUI() {
 
     const name =
         currentUser.name ||
-        currentUser.email ||
+        currentUser.username ||
         "User";
 
     const initial =
@@ -762,21 +677,24 @@ function updateProfileUI() {
 
         $("profileName")
             .value =
-            currentUser.name || "";
+            currentUser.name ||
+            currentUser.username ||
+            "";
     }
 
-    if ($("profileEmail")) {
+    if ($("profileUsername")) {
 
-        $("profileEmail")
+        $("profileUsername")
             .value =
-            currentUser.email || "";
+            currentUser.username ||
+            "";
     }
 }
 
 
 /* ============================================================
    CONVERSATIONS
-   ============================================================ */
+============================================================ */
 
 async function loadConversations() {
 
@@ -787,10 +705,9 @@ async function loadConversations() {
     try {
 
         const query =
-            new URLSearchParams({
-                email:
-                    currentUser.email
-            });
+            addUserQueryParams(
+                new URLSearchParams()
+            );
 
         const data =
             await api(
@@ -799,8 +716,11 @@ async function loadConversations() {
             );
 
         conversations =
-            data.conversations ||
-            [];
+            Array.isArray(
+                data.conversations
+            )
+                ? data.conversations
+                : [];
 
         renderConversations();
 
@@ -816,7 +736,7 @@ async function loadConversations() {
 
 /* ============================================================
    RENDER CONVERSATIONS
-   ============================================================ */
+============================================================ */
 
 function renderConversations() {
 
@@ -863,17 +783,14 @@ function renderConversations() {
                 "conversation-item";
 
             if (
-                conversation.id ===
-                currentConversationId
+                String(conversation.id) ===
+                String(currentConversationId)
             ) {
 
                 item.classList.add(
                     "active"
                 );
             }
-
-
-            /* Conversation button */
 
             const conversationButton =
                 document.createElement(
@@ -885,7 +802,6 @@ function renderConversations() {
 
             conversationButton.className =
                 "conversation-button";
-
 
             const title =
                 document.createElement(
@@ -903,7 +819,6 @@ function renderConversations() {
                 title
             );
 
-
             conversationButton.addEventListener(
                 "click",
                 async () => {
@@ -915,9 +830,6 @@ function renderConversations() {
                     closeDrawer();
                 }
             );
-
-
-            /* Rename button */
 
             const renameButton =
                 document.createElement(
@@ -936,7 +848,6 @@ function renderConversations() {
             renameButton.textContent =
                 "✎";
 
-
             renameButton.addEventListener(
                 "click",
                 event => {
@@ -950,7 +861,6 @@ function renderConversations() {
                     );
                 }
             );
-
 
             item.appendChild(
                 conversationButton
@@ -970,7 +880,7 @@ function renderConversations() {
 
 /* ============================================================
    LOAD CONVERSATION
-   ============================================================ */
+============================================================ */
 
 async function loadConversation(id) {
 
@@ -984,10 +894,9 @@ async function loadConversation(id) {
     try {
 
         const query =
-            new URLSearchParams({
-                email:
-                    currentUser.email
-            });
+            addUserQueryParams(
+                new URLSearchParams()
+            );
 
         const data =
             await api(
@@ -1024,7 +933,7 @@ async function loadConversation(id) {
 
 /* ============================================================
    CREATE NEW CHAT
-   ============================================================ */
+============================================================ */
 
 async function createNewChat() {
 
@@ -1059,6 +968,13 @@ async function createNewChat() {
         currentConversationId =
             data.conversation.id;
 
+        conversations =
+            conversations.filter(
+                conversation =>
+                    String(conversation.id) !==
+                    String(data.conversation.id)
+            );
+
         conversations.unshift(
             data.conversation
         );
@@ -1083,7 +999,7 @@ async function createNewChat() {
 
 /* ============================================================
    WELCOME
-   ============================================================ */
+============================================================ */
 
 function showWelcome() {
 
@@ -1114,7 +1030,7 @@ function createLocalWelcome() {
 
 /* ============================================================
    RENDER MESSAGES
-   ============================================================ */
+============================================================ */
 
 function renderMessages(messages) {
 
@@ -1155,13 +1071,8 @@ function renderMessages(messages) {
 
 
 /* ============================================================
-   ADD MESSAGE TO UI
-   MATCHES CSS:
-   .message
-   .message.user
-   .message-avatar
-   .message-content
-   ============================================================ */
+   ADD MESSAGE
+============================================================ */
 
 function addMessageToUI(
     role,
@@ -1193,9 +1104,6 @@ function addMessageToUI(
         );
     }
 
-
-    /* Avatar */
-
     const avatar =
         document.createElement(
             "div"
@@ -1204,14 +1112,13 @@ function addMessageToUI(
     avatar.className =
         "message-avatar";
 
-
     if (
         role === "user"
     ) {
 
         const name =
             currentUser?.name ||
-            currentUser?.email ||
+            currentUser?.username ||
             "U";
 
         avatar.textContent =
@@ -1227,9 +1134,6 @@ function addMessageToUI(
             "N";
     }
 
-
-    /* Content */
-
     const contentBox =
         document.createElement(
             "div"
@@ -1238,11 +1142,20 @@ function addMessageToUI(
     contentBox.className =
         "message-content";
 
-    contentBox.textContent =
-        content || "";
+    if (content) {
 
+        const text =
+            document.createElement(
+                "div"
+            );
 
-    /* Generated image */
+        text.textContent =
+            content;
+
+        contentBox.appendChild(
+            text
+        );
+    }
 
     if (imageUrl) {
 
@@ -1282,14 +1195,6 @@ function addMessageToUI(
         );
     }
 
-
-    /*
-       User message:
-       avatar goes after content
-       so the bubble appears on the left
-       and avatar on the right.
-    */
-
     if (
         role === "user"
     ) {
@@ -1323,7 +1228,7 @@ function addMessageToUI(
 
 /* ============================================================
    TYPING INDICATOR
-   ============================================================ */
+============================================================ */
 
 function showTyping() {
 
@@ -1347,7 +1252,6 @@ function showTyping() {
     wrapper.className =
         "message";
 
-
     const avatar =
         document.createElement(
             "div"
@@ -1359,7 +1263,6 @@ function showTyping() {
     avatar.textContent =
         "N";
 
-
     const bubble =
         document.createElement(
             "div"
@@ -1370,7 +1273,6 @@ function showTyping() {
 
     bubble.textContent =
         "NEXORA is thinking...";
-
 
     wrapper.appendChild(
         avatar
@@ -1401,13 +1303,16 @@ function removeTyping() {
 
 /* ============================================================
    SEND MESSAGE
-   ============================================================ */
+============================================================ */
 
 async function sendMessage(
     customMessage = null
 ) {
 
-    if (!currentUser) {
+    if (
+        !currentUser ||
+        isSending
+    ) {
         return;
     }
 
@@ -1420,50 +1325,43 @@ async function sendMessage(
 
     const message =
         customMessage !== null
-            ? customMessage
+            ? String(customMessage).trim()
             : input.value.trim();
 
     if (!message) {
         return;
     }
 
+    isSending = true;
 
-    /* Clear input */
+    const sendButton =
+        $("sendBtn");
 
-    input.value =
-        "";
+    if (sendButton) {
+        sendButton.disabled = true;
+    }
+
+    input.value = "";
 
     input.style.height =
         "auto";
 
-
-    /* Hide welcome */
-
     hideWelcome();
-
-
-    /* Show user message */
 
     addMessageToUI(
         "user",
         message
     );
 
-
-    /* Typing */
-
     showTyping();
-
 
     try {
 
         const payload = {
             ...userPayload(),
 
-            message:
-                message
+            message
         };
-
 
         if (
             currentConversationId
@@ -1472,7 +1370,6 @@ async function sendMessage(
             payload.conversation_id =
                 currentConversationId;
         }
-
 
         const data =
             await api(
@@ -1487,9 +1384,7 @@ async function sendMessage(
                 }
             );
 
-
         removeTyping();
-
 
         if (
             data.conversation_id
@@ -1499,27 +1394,20 @@ async function sendMessage(
                 data.conversation_id;
         }
 
-
         const reply =
             data.reply ||
             data.response ||
             "I couldn't generate a response.";
 
-
         addMessageToUI(
             "assistant",
             reply,
-            data.image_url || null
+            data.image_url ||
+            data.image ||
+            null
         );
 
-
         await loadConversations();
-
-
-        /*
-           Keep the current conversation
-           highlighted after refreshing list.
-        */
 
         renderConversations();
 
@@ -1536,13 +1424,21 @@ async function sendMessage(
             "Send message error:",
             error
         );
+
+    } finally {
+
+        isSending = false;
+
+        if (sendButton) {
+            sendButton.disabled = false;
+        }
     }
 }
 
 
 /* ============================================================
-   SCROLL TO BOTTOM
-   ============================================================ */
+   SCROLL
+============================================================ */
 
 function scrollToBottom() {
 
@@ -1565,7 +1461,7 @@ function scrollToBottom() {
 
 /* ============================================================
    DRAWER
-   ============================================================ */
+============================================================ */
 
 function openDrawer() {
 
@@ -1593,7 +1489,7 @@ function closeDrawer() {
 
 /* ============================================================
    PROFILE
-   ============================================================ */
+============================================================ */
 
 async function openProfile() {
 
@@ -1604,10 +1500,9 @@ async function openProfile() {
     try {
 
         const query =
-            new URLSearchParams({
-                email:
-                    currentUser.email
-            });
+            addUserQueryParams(
+                new URLSearchParams()
+            );
 
         const data =
             await api(
@@ -1618,7 +1513,9 @@ async function openProfile() {
         if (data.user) {
 
             currentUser =
-                data.user;
+                normalizeUser(
+                    data.user
+                );
 
             saveUser(
                 currentUser
@@ -1643,7 +1540,7 @@ async function openProfile() {
 
 /* ============================================================
    SAVE PROFILE
-   ============================================================ */
+============================================================ */
 
 async function saveProfile() {
 
@@ -1659,6 +1556,14 @@ async function saveProfile() {
 
     if (!name) {
         return;
+    }
+
+    const button =
+        $("saveProfileBtn");
+
+    if (button) {
+        button.disabled = true;
+        button.textContent = "Saving...";
     }
 
     try {
@@ -1681,7 +1586,9 @@ async function saveProfile() {
         if (data.user) {
 
             currentUser =
-                data.user;
+                normalizeUser(
+                    data.user
+                );
 
             saveUser(
                 currentUser
@@ -1700,13 +1607,20 @@ async function saveProfile() {
             "Save profile error:",
             error
         );
+
+    } finally {
+
+        if (button) {
+            button.disabled = false;
+            button.textContent = "Save";
+        }
     }
 }
 
 
 /* ============================================================
    MEMORY
-   ============================================================ */
+============================================================ */
 
 async function openMemory() {
 
@@ -1717,10 +1631,9 @@ async function openMemory() {
     try {
 
         const query =
-            new URLSearchParams({
-                email:
-                    currentUser.email
-            });
+            addUserQueryParams(
+                new URLSearchParams()
+            );
 
         const data =
             await api(
@@ -1735,13 +1648,12 @@ async function openMemory() {
             return;
         }
 
-        box.innerHTML =
-            "";
+        box.innerHTML = "";
 
         const memories =
             data.saved_memories ||
+            data.memories ||
             [];
-
 
         if (
             memories.length === 0
@@ -1760,8 +1672,18 @@ async function openMemory() {
                             "div"
                         );
 
+                    const memoryText =
+                        typeof memory === "string"
+                            ? memory
+                            : (
+                                memory.text ||
+                                memory.content ||
+                                memory.memory ||
+                                JSON.stringify(memory)
+                            );
+
                     item.textContent =
-                        "• " + memory;
+                        "• " + memoryText;
 
                     item.style.marginBottom =
                         "8px";
@@ -1789,12 +1711,19 @@ async function openMemory() {
 
 /* ============================================================
    CLEAR MEMORY
-   ============================================================ */
+============================================================ */
 
 async function clearMemory() {
 
     if (!currentUser) {
         return;
+    }
+
+    const button =
+        $("clearMemoryBtn");
+
+    if (button) {
+        button.disabled = true;
     }
 
     try {
@@ -1819,13 +1748,19 @@ async function clearMemory() {
             "Clear memory error:",
             error
         );
+
+    } finally {
+
+        if (button) {
+            button.disabled = false;
+        }
     }
 }
 
 
 /* ============================================================
-   RENAME CONVERSATION
-   ============================================================ */
+   RENAME
+============================================================ */
 
 function openRename(
     id,
@@ -1863,7 +1798,7 @@ function openRename(
 
 /* ============================================================
    SAVE CONVERSATION NAME
-   ============================================================ */
+============================================================ */
 
 async function saveConversationName() {
 
@@ -1947,7 +1882,7 @@ async function saveConversationName() {
 
 /* ============================================================
    ACCOUNT SWITCH
-   ============================================================ */
+============================================================ */
 
 function openAccountModal() {
 
@@ -1962,6 +1897,19 @@ function switchAccount() {
     hide(
         $("accountModal")
     );
+
+    /*
+       Clear the locally saved account so the next
+       person can log in with a different account.
+    */
+
+    localStorage.removeItem(
+        "nexora_user"
+    );
+
+    currentUser = null;
+    currentConversationId = null;
+    conversations = [];
 
     hide(
         $("app")
@@ -1985,6 +1933,14 @@ function switchToSignup() {
         $("accountModal")
     );
 
+    localStorage.removeItem(
+        "nexora_user"
+    );
+
+    currentUser = null;
+    currentConversationId = null;
+    conversations = [];
+
     hide(
         $("app")
     );
@@ -2003,7 +1959,7 @@ function switchToSignup() {
 
 /* ============================================================
    VOICE INPUT
-   ============================================================ */
+============================================================ */
 
 function voiceInput() {
 
@@ -2020,7 +1976,27 @@ function voiceInput() {
         return;
     }
 
-    const recognition =
+
+    /* Stop active recognition */
+
+    if (recognition) {
+
+        try {
+            recognition.stop();
+        } catch (error) {
+            console.warn(
+                "Voice stop error:",
+                error
+            );
+        }
+
+        recognition = null;
+
+        return;
+    }
+
+
+    recognition =
         new SpeechRecognition();
 
     recognition.lang =
@@ -2096,6 +2072,8 @@ function voiceInput() {
                 button.textContent =
                     "🎤";
             }
+
+            recognition = null;
         };
 
 
@@ -2109,13 +2087,15 @@ function voiceInput() {
             "Voice start error:",
             error
         );
+
+        recognition = null;
     }
 }
 
 
 /* ============================================================
-   CLOSE MODALS WHEN CLICKING BACKGROUND
-   ============================================================ */
+   MODAL BACKGROUNDS
+============================================================ */
 
 function setupModalBackgrounds() {
 
@@ -2146,7 +2126,7 @@ function setupModalBackgrounds() {
 
 /* ============================================================
    EVENTS
-   ============================================================ */
+============================================================ */
 
 function setupEvents() {
 
@@ -2187,64 +2167,6 @@ function setupEvents() {
         );
 
 
-    $("showForgotPassword")
-        ?.addEventListener(
-            "click",
-            () => {
-
-                const loginEmail =
-                    $("loginEmail")
-                        ?.value
-                        .trim();
-
-                if (loginEmail) {
-
-                    $("forgotEmail")
-                        .value =
-                        loginEmail;
-                }
-
-                showAuthScreen(
-                    "forgotPasswordScreen"
-                );
-            }
-        );
-
-
-    $("backToLogin")
-        ?.addEventListener(
-            "click",
-            () =>
-                showAuthScreen(
-                    "loginScreen"
-                )
-        );
-
-
-    $("resetBackToLogin")
-        ?.addEventListener(
-            "click",
-            () =>
-                showAuthScreen(
-                    "loginScreen"
-                )
-        );
-
-
-    $("forgotPasswordBtn")
-        ?.addEventListener(
-            "click",
-            requestPasswordReset
-        );
-
-
-    $("resetPasswordBtn")
-        ?.addEventListener(
-            "click",
-            resetPassword
-        );
-
-
     /* DRAWER */
 
     $("menuBtn")
@@ -2280,7 +2202,8 @@ function setupEvents() {
     $("sendBtn")
         ?.addEventListener(
             "click",
-            () => sendMessage()
+            () =>
+                sendMessage()
         );
 
 
@@ -2407,7 +2330,7 @@ function setupEvents() {
         );
 
 
-    /* MODAL CLOSE BUTTONS */
+    /* MODAL CLOSE */
 
     $("closeProfileModal")
         ?.addEventListener(
@@ -2492,9 +2415,26 @@ function setupEvents() {
 
 /* ============================================================
    AUTH ENTER KEYS
-   ============================================================ */
+============================================================ */
 
 function setupAuthEnterKeys() {
+
+    $("loginUsername")
+        ?.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key === "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    $("loginPassword")
+                        ?.focus();
+                }
+            }
+        );
 
 
     $("loginPassword")
@@ -2514,6 +2454,24 @@ function setupAuthEnterKeys() {
         );
 
 
+    $("signupUsername")
+        ?.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key === "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    $("signupPassword")
+                        ?.focus();
+                }
+            }
+        );
+
+
     $("signupPassword")
         ?.addEventListener(
             "keydown",
@@ -2525,41 +2483,25 @@ function setupAuthEnterKeys() {
 
                     event.preventDefault();
 
+                    $("signupPasswordConfirm")
+                        ?.focus();
+                }
+            }
+        );
+
+
+    $("signupPasswordConfirm")
+        ?.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key === "Enter"
+                ) {
+
+                    event.preventDefault();
+
                     signup();
-                }
-            }
-        );
-
-
-    $("forgotEmail")
-        ?.addEventListener(
-            "keydown",
-            event => {
-
-                if (
-                    event.key === "Enter"
-                ) {
-
-                    event.preventDefault();
-
-                    requestPasswordReset();
-                }
-            }
-        );
-
-
-    $("resetPasswordConfirm")
-        ?.addEventListener(
-            "keydown",
-            event => {
-
-                if (
-                    event.key === "Enter"
-                ) {
-
-                    event.preventDefault();
-
-                    resetPassword();
                 }
             }
         );
@@ -2584,8 +2526,49 @@ function setupAuthEnterKeys() {
 
 
 /* ============================================================
+   ESCAPE KEY
+============================================================ */
+
+function setupEscapeKey() {
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key !== "Escape"
+            ) {
+                return;
+            }
+
+            hide(
+                $("profileModal")
+            );
+
+            hide(
+                $("memoryModal")
+            );
+
+            hide(
+                $("renameModal")
+            );
+
+            hide(
+                $("accountModal")
+            );
+
+            closeDrawer();
+
+            renameConversationId =
+                null;
+        }
+    );
+}
+
+
+/* ============================================================
    START NEXORA
-   ============================================================ */
+============================================================ */
 
 async function startNexora() {
 
@@ -2593,24 +2576,14 @@ async function startNexora() {
 
     setupAuthEnterKeys();
 
-
-    /* Check password reset link */
-
-    const hasResetLink =
-        checkResetLink();
-
-    if (hasResetLink) {
-        return;
-    }
-
-
-    /* Check saved account */
+    setupEscapeKey();
 
     const savedUser =
         loadUser();
 
-
-    if (savedUser) {
+    if (
+        savedUser?.username
+    ) {
 
         currentUser =
             savedUser;
@@ -2623,9 +2596,6 @@ async function startNexora() {
 
         return;
     }
-
-
-    /* Show login after splash */
 
     setTimeout(
         () => {
@@ -2650,7 +2620,7 @@ async function startNexora() {
 
 /* ============================================================
    START
-   ============================================================ */
+============================================================ */
 
 document.addEventListener(
     "DOMContentLoaded",
