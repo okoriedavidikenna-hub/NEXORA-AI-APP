@@ -1,10 +1,12 @@
 /* ============================================================
    NEXORA AI 13
-   FRONTEND CONTROLLER
+   COMPLETE FRONTEND CONTROLLER
+   MATCHED TO NEXORA AI VERSION 13 HTML + CSS
    DAVIDS DIGITALS LTD.©
    ============================================================ */
 
-const API_BASE = "https://nexora-ai-1-r9y5.onrender.com";
+const API_BASE =
+    "https://nexora-ai-1-r9y5.onrender.com";
 
 
 /* ============================================================
@@ -19,16 +21,23 @@ let renameConversationId = null;
 
 
 /* ============================================================
-   DOM HELPERS
+   DOM HELPER
    ============================================================ */
 
-const $ = (id) => document.getElementById(id);
+const $ = (id) =>
+    document.getElementById(id);
+
+
+/* ============================================================
+   DISPLAY HELPERS
+   ============================================================ */
 
 function show(element) {
     if (element) {
         element.style.display = "";
     }
 }
+
 
 function hide(element) {
     if (element) {
@@ -41,10 +50,7 @@ function hide(element) {
    API
    ============================================================ */
 
-async function api(
-    endpoint,
-    options = {}
-) {
+async function api(endpoint, options = {}) {
 
     const config = {
         ...options,
@@ -61,13 +67,16 @@ async function api(
             config
         );
 
-        const data = await response.json()
-            .catch(() => ({}));
+        const data =
+            await response
+                .json()
+                .catch(() => ({}));
 
         if (!response.ok) {
 
             throw new Error(
                 data.message ||
+                data.error ||
                 "Something went wrong."
             );
         }
@@ -77,7 +86,7 @@ async function api(
     } catch (error) {
 
         console.error(
-            "NEXORA API error:",
+            "NEXORA API Error:",
             error
         );
 
@@ -95,31 +104,32 @@ function setAuthMessage(
     type = ""
 ) {
 
-    const box = $("authMessage");
+    const box =
+        $("authMessage");
 
     if (!box) return;
 
-    box.textContent = message;
+    box.textContent =
+        message || "";
 
     box.className =
-        "auth-message " + type;
+        "auth-message " +
+        type;
 }
 
 
 /* ============================================================
-   AUTH SCREENS
+   AUTH SCREEN
    ============================================================ */
 
-function showAuthScreen(
-    screen
-) {
+function showAuthScreen(screenId) {
 
     hide($("loginScreen"));
     hide($("signupScreen"));
     hide($("forgotPasswordScreen"));
     hide($("resetPasswordScreen"));
 
-    show($(screen));
+    show($(screenId));
 
     setAuthMessage("");
 }
@@ -131,7 +141,8 @@ function showAuthScreen(
 
 function saveUser(user) {
 
-    currentUser = user;
+    currentUser =
+        user;
 
     localStorage.setItem(
         "nexora_user",
@@ -157,14 +168,37 @@ function loadUser() {
             return null;
         }
 
-        return JSON.parse(
-            saved
-        );
+        return JSON.parse(saved);
 
-    } catch {
+    } catch (error) {
+
+        console.error(error);
 
         return null;
     }
+}
+
+
+/* ============================================================
+   USER PAYLOAD
+   ============================================================ */
+
+function userPayload() {
+
+    if (!currentUser) {
+        return {};
+    }
+
+    return {
+        email:
+            currentUser.email,
+
+        username:
+            currentUser.username,
+
+        user:
+            currentUser
+    };
 }
 
 
@@ -176,20 +210,27 @@ function logout() {
 
     currentUser = null;
     currentConversationId = null;
+    conversations = [];
 
     localStorage.removeItem(
         "nexora_user"
     );
 
     hide($("app"));
+
     show($("authScreen"));
 
     showAuthScreen(
         "loginScreen"
     );
 
-    $("loginEmail").value = "";
-    $("loginPassword").value = "";
+    if ($("loginEmail")) {
+        $("loginEmail").value = "";
+    }
+
+    if ($("loginPassword")) {
+        $("loginPassword").value = "";
+    }
 
     setAuthMessage("");
 }
@@ -202,10 +243,13 @@ function logout() {
 async function login() {
 
     const email =
-        $("loginEmail").value.trim();
+        $("loginEmail")
+            ?.value
+            .trim();
 
     const password =
-        $("loginPassword").value;
+        $("loginPassword")
+            ?.value || "";
 
     if (!email) {
 
@@ -230,22 +274,28 @@ async function login() {
     const button =
         $("loginBtn");
 
-    button.disabled = true;
-    button.textContent =
-        "Logging in...";
+    if (button) {
+
+        button.disabled = true;
+        button.textContent =
+            "Logging in...";
+    }
 
     try {
 
-        const data = await api(
-            "/login",
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    email,
-                    password
-                })
-            }
-        );
+        const data =
+            await api(
+                "/login",
+                {
+                    method: "POST",
+
+                    body:
+                        JSON.stringify({
+                            email,
+                            password
+                        })
+                }
+            );
 
         if (!data.success) {
 
@@ -274,9 +324,12 @@ async function login() {
 
     } finally {
 
-        button.disabled = false;
-        button.textContent =
-            "Login";
+        if (button) {
+
+            button.disabled = false;
+            button.textContent =
+                "Login";
+        }
     }
 }
 
@@ -288,13 +341,18 @@ async function login() {
 async function signup() {
 
     const name =
-        $("signupName").value.trim();
+        $("signupName")
+            ?.value
+            .trim();
 
     const email =
-        $("signupEmail").value.trim();
+        $("signupEmail")
+            ?.value
+            .trim();
 
     const password =
-        $("signupPassword").value;
+        $("signupPassword")
+            ?.value || "";
 
     if (!name) {
 
@@ -329,23 +387,29 @@ async function signup() {
     const button =
         $("signupBtn");
 
-    button.disabled = true;
-    button.textContent =
-        "Creating...";
+    if (button) {
+
+        button.disabled = true;
+        button.textContent =
+            "Creating...";
+    }
 
     try {
 
-        const data = await api(
-            "/signup",
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    name,
-                    email,
-                    password
-                })
-            }
-        );
+        const data =
+            await api(
+                "/signup",
+                {
+                    method: "POST",
+
+                    body:
+                        JSON.stringify({
+                            name,
+                            email,
+                            password
+                        })
+                }
+            );
 
         if (!data.success) {
 
@@ -374,9 +438,12 @@ async function signup() {
 
     } finally {
 
-        button.disabled = false;
-        button.textContent =
-            "Sign Up";
+        if (button) {
+
+            button.disabled = false;
+            button.textContent =
+                "Sign Up";
+        }
     }
 }
 
@@ -388,7 +455,9 @@ async function signup() {
 async function requestPasswordReset() {
 
     const email =
-        $("forgotEmail").value.trim();
+        $("forgotEmail")
+            ?.value
+            .trim();
 
     if (!email) {
 
@@ -403,21 +472,27 @@ async function requestPasswordReset() {
     const button =
         $("forgotPasswordBtn");
 
-    button.disabled = true;
-    button.textContent =
-        "Sending...";
+    if (button) {
+
+        button.disabled = true;
+        button.textContent =
+            "Sending...";
+    }
 
     try {
 
-        const data = await api(
-            "/forgot-password",
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    email
-                })
-            }
-        );
+        const data =
+            await api(
+                "/forgot-password",
+                {
+                    method: "POST",
+
+                    body:
+                        JSON.stringify({
+                            email
+                        })
+                }
+            );
 
         setAuthMessage(
             data.message ||
@@ -425,8 +500,10 @@ async function requestPasswordReset() {
             "success"
         );
 
-        button.textContent =
-            "Reset Link Sent";
+        if (button) {
+            button.textContent =
+                "Reset Link Sent";
+        }
 
     } catch (error) {
 
@@ -436,9 +513,12 @@ async function requestPasswordReset() {
             "error"
         );
 
-        button.disabled = false;
-        button.textContent =
-            "Send Reset Link";
+        if (button) {
+
+            button.disabled = false;
+            button.textContent =
+                "Send Reset Link";
+        }
     }
 }
 
@@ -460,10 +540,12 @@ async function resetPassword() {
     }
 
     const password =
-        $("resetPassword").value;
+        $("resetPassword")
+            ?.value || "";
 
     const confirmPassword =
-        $("resetPasswordConfirm").value;
+        $("resetPasswordConfirm")
+            ?.value || "";
 
     if (password.length < 6) {
 
@@ -488,24 +570,33 @@ async function resetPassword() {
     const button =
         $("resetPasswordBtn");
 
-    button.disabled = true;
-    button.textContent =
-        "Resetting...";
+    if (button) {
+
+        button.disabled = true;
+        button.textContent =
+            "Resetting...";
+    }
 
     try {
 
-        const data = await api(
-            "/reset-password",
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    token: resetToken,
-                    password,
-                    confirm_password:
-                        confirmPassword
-                })
-            }
-        );
+        const data =
+            await api(
+                "/reset-password",
+                {
+                    method: "POST",
+
+                    body:
+                        JSON.stringify({
+                            token:
+                                resetToken,
+
+                            password,
+
+                            confirm_password:
+                                confirmPassword
+                        })
+                }
+            );
 
         if (!data.success) {
 
@@ -530,8 +621,9 @@ async function resetPassword() {
             "loginScreen"
         );
 
-        $("loginPassword").value =
-            "";
+        if ($("loginPassword")) {
+            $("loginPassword").value = "";
+        }
 
         setAuthMessage(
             "Password reset successfully. You can now log in with your new password.",
@@ -548,15 +640,18 @@ async function resetPassword() {
 
     } finally {
 
-        button.disabled = false;
-        button.textContent =
-            "Reset Password";
+        if (button) {
+
+            button.disabled = false;
+            button.textContent =
+                "Reset Password";
+        }
     }
 }
 
 
 /* ============================================================
-   CHECK RESET LINK
+   CHECK PASSWORD RESET LINK
    ============================================================ */
 
 function checkResetLink() {
@@ -575,10 +670,16 @@ function checkResetLink() {
         return false;
     }
 
-    resetToken = token;
+    resetToken =
+        token;
 
-    hide($("splashScreen"));
-    show($("authScreen"));
+    hide(
+        $("splashScreen")
+    );
+
+    show(
+        $("authScreen")
+    );
 
     showAuthScreen(
         "resetPasswordScreen"
@@ -598,8 +699,17 @@ function checkResetLink() {
 
 async function openApp() {
 
-    hide($("authScreen"));
-    show($("app"));
+    hide(
+        $("authScreen")
+    );
+
+    hide(
+        $("splashScreen")
+    );
+
+    show(
+        $("app")
+    );
 
     updateProfileUI();
 
@@ -665,26 +775,6 @@ function updateProfileUI() {
 
 
 /* ============================================================
-   USER PAYLOAD
-   ============================================================ */
-
-function userPayload() {
-
-    if (!currentUser) {
-        return {};
-    }
-
-    return {
-        email:
-            currentUser.email,
-        username:
-            currentUser.username,
-        user: currentUser
-    };
-}
-
-
-/* ============================================================
    CONVERSATIONS
    ============================================================ */
 
@@ -717,11 +807,16 @@ async function loadConversations() {
     } catch (error) {
 
         console.error(
+            "Conversation loading error:",
             error
         );
     }
 }
 
+
+/* ============================================================
+   RENDER CONVERSATIONS
+   ============================================================ */
 
 function renderConversations() {
 
@@ -743,14 +838,11 @@ function renderConversations() {
                 "div"
             );
 
+        empty.className =
+            "conversation-empty";
+
         empty.textContent =
             "No conversations yet.";
-
-        empty.style.opacity =
-            "0.6";
-
-        empty.style.padding =
-            "12px";
 
         list.appendChild(
             empty
@@ -780,28 +872,93 @@ function renderConversations() {
                 );
             }
 
+
+            /* Conversation button */
+
+            const conversationButton =
+                document.createElement(
+                    "button"
+                );
+
+            conversationButton.type =
+                "button";
+
+            conversationButton.className =
+                "conversation-button";
+
+
             const title =
                 document.createElement(
                     "span"
                 );
 
+            title.className =
+                "conversation-title";
+
             title.textContent =
                 conversation.title ||
                 "New chat";
 
-            item.appendChild(
+            conversationButton.appendChild(
                 title
             );
 
-            item.onclick =
-                () => {
 
-                    loadConversation(
+            conversationButton.addEventListener(
+                "click",
+                async () => {
+
+                    await loadConversation(
                         conversation.id
                     );
 
                     closeDrawer();
-                };
+                }
+            );
+
+
+            /* Rename button */
+
+            const renameButton =
+                document.createElement(
+                    "button"
+                );
+
+            renameButton.type =
+                "button";
+
+            renameButton.className =
+                "conversation-rename";
+
+            renameButton.title =
+                "Rename conversation";
+
+            renameButton.textContent =
+                "✎";
+
+
+            renameButton.addEventListener(
+                "click",
+                event => {
+
+                    event.stopPropagation();
+
+                    openRename(
+                        conversation.id,
+                        conversation.title ||
+                        ""
+                    );
+                }
+            );
+
+
+            item.appendChild(
+                conversationButton
+            );
+
+            item.appendChild(
+                renameButton
+            );
 
             list.appendChild(
                 item
@@ -815,11 +972,12 @@ function renderConversations() {
    LOAD CONVERSATION
    ============================================================ */
 
-async function loadConversation(
-    id
-) {
+async function loadConversation(id) {
 
-    if (!currentUser || !id) {
+    if (
+        !currentUser ||
+        !id
+    ) {
         return;
     }
 
@@ -839,6 +997,12 @@ async function loadConversation(
                 query.toString()
             );
 
+        if (
+            !data.conversation
+        ) {
+            return;
+        }
+
         currentConversationId =
             data.conversation.id;
 
@@ -851,6 +1015,7 @@ async function loadConversation(
     } catch (error) {
 
         console.error(
+            "Load conversation error:",
             error
         );
     }
@@ -858,7 +1023,7 @@ async function loadConversation(
 
 
 /* ============================================================
-   CREATE CONVERSATION
+   CREATE NEW CHAT
    ============================================================ */
 
 async function createNewChat() {
@@ -874,12 +1039,22 @@ async function createNewChat() {
                 "/conversations/new",
                 {
                     method: "POST",
-                    body: JSON.stringify({
-                        ...userPayload(),
-                        title: "New chat"
-                    })
+
+                    body:
+                        JSON.stringify({
+                            ...userPayload(),
+
+                            title:
+                                "New chat"
+                        })
                 }
             );
+
+        if (
+            !data.conversation
+        ) {
+            return;
+        }
 
         currentConversationId =
             data.conversation.id;
@@ -889,6 +1064,7 @@ async function createNewChat() {
         );
 
         renderConversations();
+
         renderMessages([]);
 
         showWelcome();
@@ -898,6 +1074,7 @@ async function createNewChat() {
     } catch (error) {
 
         console.error(
+            "Create chat error:",
             error
         );
     }
@@ -939,12 +1116,14 @@ function createLocalWelcome() {
    RENDER MESSAGES
    ============================================================ */
 
-function renderMessages(
-    messages
-) {
+function renderMessages(messages) {
 
     const container =
         $("messages");
+
+    if (!container) {
+        return;
+    }
 
     container.innerHTML = "";
 
@@ -954,6 +1133,7 @@ function renderMessages(
     ) {
 
         showWelcome();
+
         return;
     }
 
@@ -975,7 +1155,12 @@ function renderMessages(
 
 
 /* ============================================================
-   ADD MESSAGE
+   ADD MESSAGE TO UI
+   MATCHES CSS:
+   .message
+   .message.user
+   .message-avatar
+   .message-content
    ============================================================ */
 
 function addMessageToUI(
@@ -987,33 +1172,77 @@ function addMessageToUI(
     const container =
         $("messages");
 
+    if (!container) {
+        return;
+    }
+
     const wrapper =
         document.createElement(
             "div"
         );
 
     wrapper.className =
-        "message " +
-        (
-            role === "user"
-                ? "user-message"
-                : "assistant-message"
-        );
+        "message";
 
-    const bubble =
+    if (
+        role === "user"
+    ) {
+
+        wrapper.classList.add(
+            "user"
+        );
+    }
+
+
+    /* Avatar */
+
+    const avatar =
         document.createElement(
             "div"
         );
 
-    bubble.className =
-        "message-bubble";
+    avatar.className =
+        "message-avatar";
 
-    bubble.textContent =
+
+    if (
+        role === "user"
+    ) {
+
+        const name =
+            currentUser?.name ||
+            currentUser?.email ||
+            "U";
+
+        avatar.textContent =
+            name
+                .trim()
+                .charAt(0)
+                .toUpperCase() ||
+            "U";
+
+    } else {
+
+        avatar.textContent =
+            "N";
+    }
+
+
+    /* Content */
+
+    const contentBox =
+        document.createElement(
+            "div"
+        );
+
+    contentBox.className =
+        "message-content";
+
+    contentBox.textContent =
         content || "";
 
-    wrapper.appendChild(
-        bubble
-    );
+
+    /* Generated image */
 
     if (imageUrl) {
 
@@ -1028,6 +1257,12 @@ function addMessageToUI(
         image.alt =
             "Generated image";
 
+        image.style.display =
+            "block";
+
+        image.style.width =
+            "100%";
+
         image.style.maxWidth =
             "100%";
 
@@ -1035,10 +1270,46 @@ function addMessageToUI(
             "14px";
 
         image.style.marginTop =
-            "10px";
+            content
+                ? "10px"
+                : "0";
 
-        bubble.appendChild(
+        image.loading =
+            "lazy";
+
+        contentBox.appendChild(
             image
+        );
+    }
+
+
+    /*
+       User message:
+       avatar goes after content
+       so the bubble appears on the left
+       and avatar on the right.
+    */
+
+    if (
+        role === "user"
+    ) {
+
+        wrapper.appendChild(
+            contentBox
+        );
+
+        wrapper.appendChild(
+            avatar
+        );
+
+    } else {
+
+        wrapper.appendChild(
+            avatar
+        );
+
+        wrapper.appendChild(
+            contentBox
         );
     }
 
@@ -1061,6 +1332,10 @@ function showTyping() {
     const container =
         $("messages");
 
+    if (!container) {
+        return;
+    }
+
     const wrapper =
         document.createElement(
             "div"
@@ -1070,7 +1345,20 @@ function showTyping() {
         "nexoraTyping";
 
     wrapper.className =
-        "message assistant-message";
+        "message";
+
+
+    const avatar =
+        document.createElement(
+            "div"
+        );
+
+    avatar.className =
+        "message-avatar";
+
+    avatar.textContent =
+        "N";
+
 
     const bubble =
         document.createElement(
@@ -1078,10 +1366,15 @@ function showTyping() {
         );
 
     bubble.className =
-        "message-bubble";
+        "message-content";
 
     bubble.textContent =
         "NEXORA is thinking...";
+
+
+    wrapper.appendChild(
+        avatar
+    );
 
     wrapper.appendChild(
         bubble
@@ -1121,6 +1414,10 @@ async function sendMessage(
     const input =
         $("messageInput");
 
+    if (!input) {
+        return;
+    }
+
     const message =
         customMessage !== null
             ? customMessage
@@ -1130,26 +1427,43 @@ async function sendMessage(
         return;
     }
 
-    input.value = "";
+
+    /* Clear input */
+
+    input.value =
+        "";
 
     input.style.height =
         "auto";
 
+
+    /* Hide welcome */
+
     hideWelcome();
+
+
+    /* Show user message */
 
     addMessageToUI(
         "user",
         message
     );
 
+
+    /* Typing */
+
     showTyping();
+
 
     try {
 
         const payload = {
             ...userPayload(),
-            message
+
+            message:
+                message
         };
+
 
         if (
             currentConversationId
@@ -1159,11 +1473,13 @@ async function sendMessage(
                 currentConversationId;
         }
 
+
         const data =
             await api(
                 "/chat",
                 {
                     method: "POST",
+
                     body:
                         JSON.stringify(
                             payload
@@ -1171,7 +1487,9 @@ async function sendMessage(
                 }
             );
 
+
         removeTyping();
+
 
         if (
             data.conversation_id
@@ -1181,50 +1499,29 @@ async function sendMessage(
                 data.conversation_id;
         }
 
-        addMessageToUI(
-            "assistant",
+
+        const reply =
             data.reply ||
             data.response ||
-            "I couldn't generate a response."
+            "I couldn't generate a response.";
+
+
+        addMessageToUI(
+            "assistant",
+            reply,
+            data.image_url || null
         );
 
-        if (
-            data.image_url
-        ) {
-
-            const messages =
-                $("messages");
-
-            const last =
-                messages.lastElementChild;
-
-            if (last) {
-
-                const image =
-                    document.createElement(
-                        "img"
-                    );
-
-                image.src =
-                    data.image_url;
-
-                image.style.maxWidth =
-                    "100%";
-
-                image.style.borderRadius =
-                    "14px";
-
-                last
-                    .querySelector(
-                        ".message-bubble"
-                    )
-                    ?.appendChild(
-                        image
-                    );
-            }
-        }
 
         await loadConversations();
+
+
+        /*
+           Keep the current conversation
+           highlighted after refreshing list.
+        */
+
+        renderConversations();
 
     } catch (error) {
 
@@ -1236,6 +1533,7 @@ async function sendMessage(
         );
 
         console.error(
+            "Send message error:",
             error
         );
     }
@@ -1243,7 +1541,7 @@ async function sendMessage(
 
 
 /* ============================================================
-   SCROLL
+   SCROLL TO BOTTOM
    ============================================================ */
 
 function scrollToBottom() {
@@ -1336,18 +1634,28 @@ async function openProfile() {
     } catch (error) {
 
         console.error(
+            "Profile error:",
             error
         );
     }
 }
 
 
+/* ============================================================
+   SAVE PROFILE
+   ============================================================ */
+
 async function saveProfile() {
 
+    const input =
+        $("profileName");
+
+    if (!input) {
+        return;
+    }
+
     const name =
-        $("profileName")
-            .value
-            .trim();
+        input.value.trim();
 
     if (!name) {
         return;
@@ -1360,9 +1668,11 @@ async function saveProfile() {
                 "/profile",
                 {
                     method: "POST",
+
                     body:
                         JSON.stringify({
                             ...userPayload(),
+
                             name
                         })
                 }
@@ -1387,6 +1697,7 @@ async function saveProfile() {
     } catch (error) {
 
         console.error(
+            "Save profile error:",
             error
         );
     }
@@ -1420,11 +1731,17 @@ async function openMemory() {
         const box =
             $("memoryContent");
 
-        box.innerHTML = "";
+        if (!box) {
+            return;
+        }
+
+        box.innerHTML =
+            "";
 
         const memories =
             data.saved_memories ||
             [];
+
 
         if (
             memories.length === 0
@@ -1463,11 +1780,16 @@ async function openMemory() {
     } catch (error) {
 
         console.error(
+            "Memory error:",
             error
         );
     }
 }
 
+
+/* ============================================================
+   CLEAR MEMORY
+   ============================================================ */
 
 async function clearMemory() {
 
@@ -1481,6 +1803,7 @@ async function clearMemory() {
             "/memory/clear",
             {
                 method: "POST",
+
                 body:
                     JSON.stringify(
                         userPayload()
@@ -1488,11 +1811,12 @@ async function clearMemory() {
             }
         );
 
-        openMemory();
+        await openMemory();
 
     } catch (error) {
 
         console.error(
+            "Clear memory error:",
             error
         );
     }
@@ -1500,18 +1824,36 @@ async function clearMemory() {
 
 
 /* ============================================================
-   RENAME
+   RENAME CONVERSATION
    ============================================================ */
 
 function openRename(
-    id
+    id,
+    currentTitle = ""
 ) {
 
     renameConversationId =
         id;
 
-    $("renameConversationInput")
-        .value = "";
+    const input =
+        $("renameConversationInput");
+
+    if (input) {
+
+        input.value =
+            currentTitle || "";
+
+        setTimeout(
+            () => {
+
+                input.focus();
+
+                input.select();
+
+            },
+            50
+        );
+    }
 
     show(
         $("renameModal")
@@ -1519,18 +1861,39 @@ function openRename(
 }
 
 
+/* ============================================================
+   SAVE CONVERSATION NAME
+   ============================================================ */
+
 async function saveConversationName() {
 
+    const input =
+        $("renameConversationInput");
+
+    if (!input) {
+        return;
+    }
+
     const title =
-        $("renameConversationInput")
-            .value
-            .trim();
+        input.value.trim();
 
     if (
         !title ||
         !renameConversationId
     ) {
         return;
+    }
+
+    const button =
+        $("saveConversationNameBtn");
+
+    if (button) {
+
+        button.disabled =
+            true;
+
+        button.textContent =
+            "Saving...";
     }
 
     try {
@@ -1542,9 +1905,11 @@ async function saveConversationName() {
             ),
             {
                 method: "PATCH",
+
                 body:
                     JSON.stringify({
                         ...userPayload(),
+
                         title
                     })
             }
@@ -1554,13 +1919,28 @@ async function saveConversationName() {
             $("renameModal")
         );
 
+        renameConversationId =
+            null;
+
         await loadConversations();
 
     } catch (error) {
 
         console.error(
+            "Rename error:",
             error
         );
+
+    } finally {
+
+        if (button) {
+
+            button.disabled =
+                false;
+
+            button.textContent =
+                "Save Name";
+        }
     }
 }
 
@@ -1569,7 +1949,19 @@ async function saveConversationName() {
    ACCOUNT SWITCH
    ============================================================ */
 
+function openAccountModal() {
+
+    show(
+        $("accountModal")
+    );
+}
+
+
 function switchAccount() {
+
+    hide(
+        $("accountModal")
+    );
 
     hide(
         $("app")
@@ -1590,6 +1982,10 @@ function switchAccount() {
 function switchToSignup() {
 
     hide(
+        $("accountModal")
+    );
+
+    hide(
         $("app")
     );
 
@@ -1606,7 +2002,7 @@ function switchToSignup() {
 
 
 /* ============================================================
-   VOICE
+   VOICE INPUT
    ============================================================ */
 
 function voiceInput() {
@@ -1636,16 +2032,115 @@ function voiceInput() {
     recognition.maxAlternatives =
         1;
 
-    recognition.onresult =
-        (event) => {
 
-            $("messageInput")
-                .value =
-                event.results[0][0]
-                    .transcript;
+    recognition.onstart =
+        () => {
+
+            const button =
+                $("voiceBtn");
+
+            if (button) {
+
+                button.textContent =
+                    "🔴";
+            }
         };
 
-    recognition.start();
+
+    recognition.onresult =
+        event => {
+
+            const transcript =
+                event.results[0][0]
+                    .transcript;
+
+            const input =
+                $("messageInput");
+
+            if (!input) {
+                return;
+            }
+
+            input.value =
+                transcript;
+
+            input.style.height =
+                "auto";
+
+            input.style.height =
+                Math.min(
+                    input.scrollHeight,
+                    150
+                ) + "px";
+        };
+
+
+    recognition.onerror =
+        error => {
+
+            console.error(
+                "Voice recognition error:",
+                error
+            );
+        };
+
+
+    recognition.onend =
+        () => {
+
+            const button =
+                $("voiceBtn");
+
+            if (button) {
+
+                button.textContent =
+                    "🎤";
+            }
+        };
+
+
+    try {
+
+        recognition.start();
+
+    } catch (error) {
+
+        console.error(
+            "Voice start error:",
+            error
+        );
+    }
+}
+
+
+/* ============================================================
+   CLOSE MODALS WHEN CLICKING BACKGROUND
+   ============================================================ */
+
+function setupModalBackgrounds() {
+
+    document
+        .querySelectorAll(".modal")
+        .forEach(
+            modal => {
+
+                modal.addEventListener(
+                    "click",
+                    event => {
+
+                        if (
+                            event.target ===
+                            modal
+                        ) {
+
+                            hide(
+                                modal
+                            );
+                        }
+                    }
+                );
+            }
+        );
 }
 
 
@@ -1655,11 +2150,15 @@ function voiceInput() {
 
 function setupEvents() {
 
+
+    /* AUTH */
+
     $("loginBtn")
         ?.addEventListener(
             "click",
             login
         );
+
 
     $("signupBtn")
         ?.addEventListener(
@@ -1667,21 +2166,26 @@ function setupEvents() {
             signup
         );
 
+
     $("showSignup")
         ?.addEventListener(
             "click",
-            () => showAuthScreen(
-                "signupScreen"
-            )
+            () =>
+                showAuthScreen(
+                    "signupScreen"
+                )
         );
+
 
     $("showLogin")
         ?.addEventListener(
             "click",
-            () => showAuthScreen(
-                "loginScreen"
-            )
+            () =>
+                showAuthScreen(
+                    "loginScreen"
+                )
         );
+
 
     $("showForgotPassword")
         ?.addEventListener(
@@ -1690,7 +2194,7 @@ function setupEvents() {
 
                 const loginEmail =
                     $("loginEmail")
-                        .value
+                        ?.value
                         .trim();
 
                 if (loginEmail) {
@@ -1706,21 +2210,26 @@ function setupEvents() {
             }
         );
 
+
     $("backToLogin")
         ?.addEventListener(
             "click",
-            () => showAuthScreen(
-                "loginScreen"
-            )
+            () =>
+                showAuthScreen(
+                    "loginScreen"
+                )
         );
+
 
     $("resetBackToLogin")
         ?.addEventListener(
             "click",
-            () => showAuthScreen(
-                "loginScreen"
-            )
+            () =>
+                showAuthScreen(
+                    "loginScreen"
+                )
         );
+
 
     $("forgotPasswordBtn")
         ?.addEventListener(
@@ -1728,11 +2237,15 @@ function setupEvents() {
             requestPasswordReset
         );
 
+
     $("resetPasswordBtn")
         ?.addEventListener(
             "click",
             resetPassword
         );
+
+
+    /* DRAWER */
 
     $("menuBtn")
         ?.addEventListener(
@@ -1740,11 +2253,13 @@ function setupEvents() {
             openDrawer
         );
 
+
     $("closeDrawer")
         ?.addEventListener(
             "click",
             closeDrawer
         );
+
 
     $("drawerOverlay")
         ?.addEventListener(
@@ -1752,11 +2267,15 @@ function setupEvents() {
             closeDrawer
         );
 
+
     $("newChatBtn")
         ?.addEventListener(
             "click",
             createNewChat
         );
+
+
+    /* CHAT */
 
     $("sendBtn")
         ?.addEventListener(
@@ -1764,11 +2283,13 @@ function setupEvents() {
             () => sendMessage()
         );
 
+
     $("voiceBtn")
         ?.addEventListener(
             "click",
             voiceInput
         );
+
 
     $("messageInput")
         ?.addEventListener(
@@ -1776,8 +2297,8 @@ function setupEvents() {
             event => {
 
                 if (
-                    event.key === "Enter"
-                    && !event.shiftKey
+                    event.key === "Enter" &&
+                    !event.shiftKey
                 ) {
 
                     event.preventDefault();
@@ -1786,6 +2307,7 @@ function setupEvents() {
                 }
             }
         );
+
 
     $("messageInput")
         ?.addEventListener(
@@ -1797,12 +2319,14 @@ function setupEvents() {
 
                 event.target.style.height =
                     Math.min(
-                        event.target
-                            .scrollHeight,
+                        event.target.scrollHeight,
                         150
                     ) + "px";
             }
         );
+
+
+    /* PROFILE */
 
     $("profileBtn")
         ?.addEventListener(
@@ -1810,11 +2334,13 @@ function setupEvents() {
             openProfile
         );
 
+
     $("topProfileBtn")
         ?.addEventListener(
             "click",
             openProfile
         );
+
 
     $("saveProfileBtn")
         ?.addEventListener(
@@ -1822,11 +2348,20 @@ function setupEvents() {
             saveProfile
         );
 
+
+    /* MEMORY */
+
     $("memoryBtn")
         ?.addEventListener(
             "click",
-            openMemory
+            async () => {
+
+                closeDrawer();
+
+                await openMemory();
+            }
         );
+
 
     $("clearMemoryBtn")
         ?.addEventListener(
@@ -1834,70 +2369,20 @@ function setupEvents() {
             clearMemory
         );
 
+
+    /* ACCOUNT */
+
     $("switchAccountBtn")
         ?.addEventListener(
             "click",
             () => {
 
-                hide(
-                    $("app")
-                );
-
-                show(
-                    $("authScreen")
-                );
-
-                showAuthScreen(
-                    "loginScreen"
-                );
-
                 closeDrawer();
+
+                openAccountModal();
             }
         );
 
-    $("logoutBtn")
-        ?.addEventListener(
-            "click",
-            logout
-        );
-
-    $("closeProfileModal")
-        ?.addEventListener(
-            "click",
-            () => hide(
-                $("profileModal")
-            )
-        );
-
-    $("closeMemoryModal")
-        ?.addEventListener(
-            "click",
-            () => hide(
-                $("memoryModal")
-            )
-        );
-
-    $("closeRenameModal")
-        ?.addEventListener(
-            "click",
-            () => hide(
-                $("renameModal")
-            )
-        );
-
-    $("closeAccountModal")
-        ?.addEventListener(
-            "click",
-            () => hide(
-                $("accountModal")
-            )
-        );
-
-    $("saveConversationNameBtn")
-        ?.addEventListener(
-            "click",
-            saveConversationName
-        );
 
     $("accountLoginBtn")
         ?.addEventListener(
@@ -1905,11 +2390,80 @@ function setupEvents() {
             switchAccount
         );
 
+
     $("accountSignupBtn")
         ?.addEventListener(
             "click",
             switchToSignup
         );
+
+
+    /* LOGOUT */
+
+    $("logoutBtn")
+        ?.addEventListener(
+            "click",
+            logout
+        );
+
+
+    /* MODAL CLOSE BUTTONS */
+
+    $("closeProfileModal")
+        ?.addEventListener(
+            "click",
+            () =>
+                hide(
+                    $("profileModal")
+                )
+        );
+
+
+    $("closeMemoryModal")
+        ?.addEventListener(
+            "click",
+            () =>
+                hide(
+                    $("memoryModal")
+                )
+        );
+
+
+    $("closeRenameModal")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                renameConversationId =
+                    null;
+
+                hide(
+                    $("renameModal")
+                );
+            }
+        );
+
+
+    $("closeAccountModal")
+        ?.addEventListener(
+            "click",
+            () =>
+                hide(
+                    $("accountModal")
+                )
+        );
+
+
+    /* RENAME */
+
+    $("saveConversationNameBtn")
+        ?.addEventListener(
+            "click",
+            saveConversationName
+        );
+
+
+    /* SUGGESTIONS */
 
     document
         .querySelectorAll(
@@ -1930,14 +2484,18 @@ function setupEvents() {
                 );
             }
         );
+
+
+    setupModalBackgrounds();
 }
 
 
 /* ============================================================
-   ENTER KEY AUTH
+   AUTH ENTER KEYS
    ============================================================ */
 
 function setupAuthEnterKeys() {
+
 
     $("loginPassword")
         ?.addEventListener(
@@ -1947,10 +2505,14 @@ function setupAuthEnterKeys() {
                 if (
                     event.key === "Enter"
                 ) {
+
+                    event.preventDefault();
+
                     login();
                 }
             }
         );
+
 
     $("signupPassword")
         ?.addEventListener(
@@ -1960,10 +2522,14 @@ function setupAuthEnterKeys() {
                 if (
                     event.key === "Enter"
                 ) {
+
+                    event.preventDefault();
+
                     signup();
                 }
             }
         );
+
 
     $("forgotEmail")
         ?.addEventListener(
@@ -1973,10 +2539,14 @@ function setupAuthEnterKeys() {
                 if (
                     event.key === "Enter"
                 ) {
+
+                    event.preventDefault();
+
                     requestPasswordReset();
                 }
             }
         );
+
 
     $("resetPasswordConfirm")
         ?.addEventListener(
@@ -1986,7 +2556,27 @@ function setupAuthEnterKeys() {
                 if (
                     event.key === "Enter"
                 ) {
+
+                    event.preventDefault();
+
                     resetPassword();
+                }
+            }
+        );
+
+
+    $("renameConversationInput")
+        ?.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key === "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    saveConversationName();
                 }
             }
         );
@@ -1994,13 +2584,17 @@ function setupAuthEnterKeys() {
 
 
 /* ============================================================
-   STARTUP
+   START NEXORA
    ============================================================ */
 
 async function startNexora() {
 
     setupEvents();
+
     setupAuthEnterKeys();
+
+
+    /* Check password reset link */
 
     const hasResetLink =
         checkResetLink();
@@ -2009,8 +2603,12 @@ async function startNexora() {
         return;
     }
 
+
+    /* Check saved account */
+
     const savedUser =
         loadUser();
+
 
     if (savedUser) {
 
@@ -2025,6 +2623,9 @@ async function startNexora() {
 
         return;
     }
+
+
+    /* Show login after splash */
 
     setTimeout(
         () => {
